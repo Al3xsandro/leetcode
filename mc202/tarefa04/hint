@@ -1,0 +1,318 @@
+/* Conforme pedido na ultima correção, vou começar a documentar os algoritmos construidos.
+   - RF (Requisitos funcionais)
+    Utilizar alocação dinâmica para representar a matriz.
+    Ajustar a quantidade de memória alocada para a matriz principal da tarefa conforme as regras do enunciado, e não apenas alocar uma matriz grande desde o início.
+    Alocar a matriz como vetor de vetores, e não como um único vetor.
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    int M, N;
+    scanf("%d %d", &M, &N);
+
+    // Alocar matriz como vetor de vetores
+    int **matriz = (int **)malloc(M * sizeof(int *));
+    for (int i = 0; i < M; i++)
+    {
+        matriz[i] = (int *)malloc(N * sizeof(int));
+    }
+
+    // Ler valores iniciais
+    for (int i = 0; i < M; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            scanf("%d", &matriz[i][j]);
+        }
+    }
+
+    int linhas_ocupadas = M;
+    int colunas_ocupadas = N;
+    int linhas_alocadas = M;
+    int colunas_alocadas = N;
+
+    char operacao[3];
+
+    while (1)
+    {
+        scanf("%s", operacao);
+
+        if (operacao[0] == 'S')
+        {
+            break;
+        }
+
+        if (operacao[0] == 'V')
+        {
+            printf("MATRIZ ATUAL:\n");
+            for (int i = 0; i < linhas_ocupadas; i++)
+            {
+                for (int j = 0; j < colunas_ocupadas; j++)
+                {
+                    printf("%d", matriz[i][j]);
+                    if (j < colunas_ocupadas - 1)
+                    {
+                        printf(" ");
+                    }
+                }
+                printf("\n");
+            }
+            continue;
+        }
+
+        if (operacao[0] == 'A' && operacao[1] == 'P')
+        {
+            // Verificar se precisa realocar ANTES de adicionar
+            int realocou = 0;
+            int old_linhas = linhas_alocadas;
+            int old_colunas = colunas_alocadas;
+
+            if (linhas_ocupadas == linhas_alocadas)
+            {
+                // Dobrar linhas alocadas
+                linhas_alocadas = linhas_alocadas * 2;
+                int **nova_matriz = (int **)malloc(linhas_alocadas * sizeof(int *));
+
+                // Copiar linhas existentes
+                for (int i = 0; i < linhas_ocupadas; i++)
+                {
+                    nova_matriz[i] = (int *)malloc(colunas_alocadas * sizeof(int));
+                    for (int j = 0; j < colunas_ocupadas; j++)
+                    {
+                        nova_matriz[i][j] = matriz[i][j];
+                    }
+                }
+
+                // Alocar novas linhas
+                for (int i = linhas_ocupadas; i < linhas_alocadas; i++)
+                {
+                    nova_matriz[i] = (int *)malloc(colunas_alocadas * sizeof(int));
+                }
+
+                // Liberar matriz antiga
+                for (int i = 0; i < old_linhas; i++)
+                {
+                    free(matriz[i]);
+                }
+                free(matriz);
+
+                matriz = nova_matriz;
+                realocou = 1;
+            }
+
+            // Ler nova linha
+            for (int j = 0; j < colunas_ocupadas; j++)
+            {
+                scanf("%d", &matriz[linhas_ocupadas][j]);
+            }
+            linhas_ocupadas++;
+
+            // Imprimir mensagem de realocação DEPOIS de atualizar contadores
+            if (realocou)
+            {
+                printf("Tamanho da matriz: %d x %d\n", linhas_ocupadas, colunas_ocupadas);
+                printf("Memória realocada: %d x %d -> %d x %d\n",
+                       old_linhas, old_colunas, linhas_alocadas, colunas_alocadas);
+            }
+        }
+
+        else if (operacao[0] == 'A' && operacao[1] == 'H')
+        {
+            // Verificar se precisa realocar ANTES de adicionar
+            int realocou = 0;
+            int old_linhas = linhas_alocadas;
+            int old_colunas = colunas_alocadas;
+
+            if (colunas_ocupadas == colunas_alocadas)
+            {
+                // Dobrar colunas alocadas
+                colunas_alocadas = colunas_alocadas * 2;
+
+                for (int i = 0; i < linhas_alocadas; i++)
+                {
+                    int *nova_linha = (int *)malloc(colunas_alocadas * sizeof(int));
+
+                    // Copiar valores existentes
+                    for (int j = 0; j < colunas_ocupadas; j++)
+                    {
+                        nova_linha[j] = matriz[i][j];
+                    }
+
+                    free(matriz[i]);
+                    matriz[i] = nova_linha;
+                }
+                realocou = 1;
+            }
+
+            // Ler nova coluna e inserir ordenadamente
+            for (int i = 0; i < linhas_ocupadas; i++)
+            {
+                int novo_valor;
+                scanf("%d", &novo_valor);
+
+                // Encontrar posição correta para manter ordem crescente
+                int pos = colunas_ocupadas;
+                for (int j = 0; j < colunas_ocupadas; j++)
+                {
+                    if (novo_valor < matriz[i][j])
+                    {
+                        pos = j;
+                        break;
+                    }
+                }
+
+                // Deslocar elementos para direita
+                for (int j = colunas_ocupadas; j > pos; j--)
+                {
+                    matriz[i][j] = matriz[i][j - 1];
+                }
+
+                // Inserir novo valor
+                matriz[i][pos] = novo_valor;
+            }
+            colunas_ocupadas++;
+
+            // Imprimir mensagem de realocação DEPOIS de atualizar contadores
+            if (realocou)
+            {
+                printf("Tamanho da matriz: %d x %d\n", linhas_ocupadas, colunas_ocupadas);
+                printf("Memória realocada: %d x %d -> %d x %d\n",
+                       old_linhas, old_colunas, linhas_alocadas, colunas_alocadas);
+            }
+        }
+
+        else if (operacao[0] == 'R' && operacao[1] == 'P')
+        {
+            int indice;
+            scanf("%d", &indice);
+
+            // Mover linhas para trás
+            for (int i = indice; i < linhas_ocupadas - 1; i++)
+            {
+                for (int j = 0; j < colunas_ocupadas; j++)
+                {
+                    matriz[i][j] = matriz[i + 1][j];
+                }
+            }
+            linhas_ocupadas--;
+
+            // Verificar se precisa realocar DEPOIS de remover
+            int realocou = 0;
+            int old_linhas = linhas_alocadas;
+            int old_colunas = colunas_alocadas;
+
+            if (linhas_ocupadas <= linhas_alocadas / 4)
+            {
+                int novo_M = linhas_alocadas / 2;
+                if (novo_M < linhas_ocupadas)
+                {
+                    novo_M = linhas_ocupadas;
+                }
+
+                int **nova_matriz = (int **)malloc(novo_M * sizeof(int *));
+
+                // Copiar linhas existentes
+                for (int i = 0; i < linhas_ocupadas; i++)
+                {
+                    nova_matriz[i] = (int *)malloc(colunas_alocadas * sizeof(int));
+                    for (int j = 0; j < colunas_ocupadas; j++)
+                    {
+                        nova_matriz[i][j] = matriz[i][j];
+                    }
+                }
+
+                // Alocar linhas restantes se necessário
+                for (int i = linhas_ocupadas; i < novo_M; i++)
+                {
+                    nova_matriz[i] = (int *)malloc(colunas_alocadas * sizeof(int));
+                }
+
+                // Liberar matriz antiga
+                for (int i = 0; i < linhas_alocadas; i++)
+                {
+                    free(matriz[i]);
+                }
+                free(matriz);
+
+                matriz = nova_matriz;
+                linhas_alocadas = novo_M;
+                realocou = 1;
+            }
+
+            // Imprimir mensagem de realocação
+            if (realocou)
+            {
+                printf("Tamanho da matriz: %d x %d\n", linhas_ocupadas, colunas_ocupadas);
+                printf("Memória realocada: %d x %d -> %d x %d\n",
+                       old_linhas, old_colunas, linhas_alocadas, colunas_alocadas);
+            }
+        }
+
+        else if (operacao[0] == 'R' && operacao[1] == 'H')
+        {
+            int indice;
+            scanf("%d", &indice);
+
+            // Remover coluna de cada linha
+            for (int i = 0; i < linhas_ocupadas; i++)
+            {
+                for (int j = indice; j < colunas_ocupadas - 1; j++)
+                {
+                    matriz[i][j] = matriz[i][j + 1];
+                }
+            }
+            colunas_ocupadas--;
+
+            // Verificar se precisa realocar DEPOIS de remover
+            int realocou = 0;
+            int old_linhas = linhas_alocadas;
+            int old_colunas = colunas_alocadas;
+
+            if (colunas_ocupadas <= colunas_alocadas / 4)
+            {
+                int novo_N = colunas_alocadas / 2;
+                if (novo_N < colunas_ocupadas)
+                {
+                    novo_N = colunas_ocupadas;
+                }
+
+                for (int i = 0; i < linhas_alocadas; i++)
+                {
+                    int *nova_linha = (int *)malloc(novo_N * sizeof(int));
+
+                    // Copiar valores existentes
+                    for (int j = 0; j < colunas_ocupadas; j++)
+                    {
+                        nova_linha[j] = matriz[i][j];
+                    }
+
+                    free(matriz[i]);
+                    matriz[i] = nova_linha;
+                }
+
+                colunas_alocadas = novo_N;
+                realocou = 1;
+            }
+
+            // Imprimir mensagem de realocação
+            if (realocou)
+            {
+                printf("Tamanho da matriz: %d x %d\n", linhas_ocupadas, colunas_ocupadas);
+                printf("Memória realocada: %d x %d -> %d x %d\n",
+                       old_linhas, old_colunas, linhas_alocadas, colunas_alocadas);
+            }
+        }
+    }
+
+    // Liberar memória
+    for (int i = 0; i < linhas_alocadas; i++)
+    {
+        free(matriz[i]);
+    }
+    free(matriz);
+
+    return 0;
+}
