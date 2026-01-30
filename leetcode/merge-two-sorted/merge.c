@@ -65,7 +65,7 @@ void printList(struct ListNode* head) {
 }
 
 struct ListNode* createNode(int val) {
-    struct ListNode* node = (struct ListNode*)malloc(sizeof(struct ListNode));
+    struct ListNode* node = malloc(sizeof(struct ListNode));
     node->val = val;
     node->next = NULL;
     return node;
